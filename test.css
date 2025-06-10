@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap');
+body {
+   font-family: 'Noto Sans KR', sans-serif;
+   font-size: 13px;
+   letter-spacing: 0.02em;
+   /* background-color: #eee; */
+}
+
+.flow-node {
+   display: flex;
+   justify-content: center;
+   flex-direction: column;
+   position: absolute;
+   z-index: 30;
+   color: #444;
+   font-size: 14px;
+   text-align: center;
+   cursor: move;
+   box-sizing: border-box;
+}
+.square {
+   background-color: #fff;
+   border: 1px solid #dddddf;
+   border-radius: 10px;
+}
+.diamond {
+   /* background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" preserveAspectRatio="none" ><polygon points="80,0 160,50 80,100 0,50" stroke="%23a7a7a7" stroke-width="1" fill="%23ffffff"/></svg>'); */
+   background-image: url('data:image/svg+xml;utf8,%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20160%20100%22%20preserveAspectRatio%3D%22none%22%3E%0A%20%20%3Cpolygon%20points%3D%2280%2C0%20160%2C50%2080%2C100%200%2C50%22%20stroke%3D%22%23a7a7a7%22%20stroke-width%3D%221%22%20fill%3D%22%23ffffff%22%20%2F%3E%0A%3C%2Fsvg%3E');
+   background-size: 100% 100%;
+   background-repeat: no-repeat;
+   background-position: center center;
+   background-color: transparent;
+}
+/* 노드 내부 스타일 */
+.node_wrapper {
+   width: 100%;
+}
+.node_title {
+   text-align: center;
+}
+
+/* zindex 정렬 */
+.jtk-connector {
+   z-index: 5; /* 선은 가장 뒤에 */
+}
+.jtk-overlay {
+   z-index: 6; /* overlay(화살표)는 선 위에 */
+}
+.my-endpoint {
+   z-index: 10; /* endpoint는 여전히 제일 위 */
+}
+/* end point */
+.jtk-endpoint {
+   z-index: 120;
+   cursor: pointer;
+   display: none;
+}
+.jtk-endpoint.show {
+   display: block;
+}
+/* 연결선 */
+svg path:last-of-type,
+.main-path,
+.bg-path {
+   pointer-events: none;
+}
+.hit-path {
+   cursor: pointer;
+}
+.hit-path:hover ~ .main-path,
+.selected-connection .main-path {
+   stroke-width: 2;
+}
+.selected-connection + .jtk-overlay,
+.selected-connection {
+   pointer-events: none;
+   z-index: 20;
+}
+
+/* 연결선 라벨 */
+div.jtk-overlay {
+   background-color: #fff;
+   color: #333;
+   padding: 2px 5px;
+   border-radius: 4px;
+   font-size: 11px;
+   white-space: nowrap;
+}
+div.jtk-overlay.label-green {
+   background: #e2fbc9;
+}
+div.jtk-overlay.label-pink {
+   background: #ffeaf1;
+}
+div.jtk-overlay.label-gray {
+   background: #f4f4f4;
+}
+
+/* input style */
+input[type='text'] {
+   width: 90%;
+   margin: 5px;
+   border: 0;
+}
+
+/* 편집채널 */
+.property-panel {
+   width: 200px;
+   height: 800px;
+   position: fixed;
+   right: 0;
+   bottom: 0;
+   z-index: 100;
+   background-color: #f9f9f9;
+   border: 1px solid #d9d9d9;
+}
+.selected-node {
+   filter: drop-shadow(0 0 4px #ddd);
+}
+/* 버튼 묶음 */
+.selected-style {
+   background-color: #3498db;
+   color: white;
+   font-weight: bold;
+}

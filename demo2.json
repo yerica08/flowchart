@@ -1,0 +1,37 @@
+{
+   "nodes": [
+      {
+         "id": "node-1",
+         "label": "<div class='node_wrapper'><div class='node_title'><span>영업팀</span></div></div>",
+         "type": "square",
+         "x": 210,
+         "y": 40,
+         "width": 150,
+         "height": 40,
+         "backgroundColor": "aeb8c3",
+         "color": "ffffff",
+         "fontSize": 14,
+         "fontWeight": 400,
+         "borderColor": "a7a7a7",
+         "borderRadius": 30
+      },
+      {
+         "id": "node-2",
+         "label": "외근/내근",
+         "type": "diamond",
+         "x": 210,
+         "y": 120,
+         "width": 150,
+         "height": 80,
+         "backgroundColor": "ffffff",
+         "color": "222222",
+         "fontSize": 14,
+         "fontWeight": 500,
+         "borderColor": "a7a7a7",
+         "borderRadius": 0
+      }
+   ],
+   "connections": [
+      { "source": "node-1", "target": "node-2", "anchors": ["Bottom", "Top"] }
+   ]
+}
