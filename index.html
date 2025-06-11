@@ -6,25 +6,19 @@
       <title>Document</title>
       <script src="./jsplumb.min.js"></script>
       <script src="./pickr.js"></script>
+      <script src="./interact.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/elkjs/lib/elk.bundled.js"></script>
       <link rel="stylesheet" href="./pickr_monolith.css" />
       <link rel="stylesheet" href="./test.css" />
    </head>
    <body>
-      <div style="margin-bottom: 10px">
-         <button id="btnAddNode">노드추가</button>
-         <button id="btnShowEndpoint">엔드포인트</button>
-         <button id="btnExport">JSON으로 복사</button>
-         <button id="renderCanvas2">Canvas2로 복사</button>
-      </div>
-
       <div
          id="canvas"
          style="
             position: relative;
-            width: 1000px;
-            height: 1000px;
-            border: 1px solid #ccc;
+            width: 2000px;
+            height: 1500px;
+            border-bottom: 1px solid #ccc;
          "
       ></div>
       <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
@@ -35,67 +29,122 @@
          </defs>
       </svg>
       <div id="property-panel" class="property-panel">
+         <div class="fnc_buttons">
+            <button id="btnAddNode">노드추가</button>
+            <button id="btnShowEndpoint">엔드포인트</button>
+            <button id="btnExport">JSON</button>
+            <button id="renderCanvas2">Canvas2</button>
+         </div>
          <!-- Node 전용 -->
          <div id="node-properties" style="display: none">
-            <h4>노드 편집</h4>
-            <div id="node-style-buttons">
-               <button data-style="rectangle1">rectangle1</button>
-               <button data-style="rectangle2">rectangle2</button>
-               <button data-style="ellipse">ellipse</button>
-               <button data-style="diamond">diamond</button>
-            </div>
-
+            <h4>Node Style</h4>
             <div>
-               <label>Font Size:</label>
-               <input type="number" id="prop-fontsize" min="8" max="48" />
+               <h5>기본 스타일</h5>
+               <div id="node-style-buttons">
+                  <button
+                     data-style="rectangle1"
+                     class="btn_rectangle1"
+                  ></button>
+                  <button
+                     data-style="rectangle2"
+                     class="btn_rectangle2"
+                  ></button>
+                  <button data-style="ellipse" class="btn_ellipse"></button>
+                  <button
+                     data-style="diamond"
+                     class="btn_diamond diamond"
+                  ></button>
+               </div>
             </div>
-
             <div>
-               <label>Font Color:</label>
-               <input type="color" id="prop-fontcolor" />
+               <h5>텍스트</h5>
+               <div class="text-wrap">
+                  <select id="prop-fontweight">
+                     <option value="300">Light</option>
+                     <option value="400" selected>Normal</option>
+                     <option value="500">Bold</option>
+                     <option value="600">Bolder</option>
+                  </select>
+                  <input
+                     type="number"
+                     id="prop-fontsize"
+                     min="8"
+                     max="48"
+                     class="input-style"
+                  />
+                  <div class="color-wrap">
+                     <input
+                        type="color"
+                        id="prop-fontcolor"
+                        class="input-color-style"
+                     />
+                  </div>
+               </div>
+               <div>
+                  <textarea id="prop-text"></textarea>
+               </div>
             </div>
-
             <div>
-               <label>Font Weight:</label>
-               <select id="prop-fontweight">
-                  <option value="300">Light</option>
-                  <option value="400" selected>Normal</option>
-                  <option value="700">Bold</option>
-               </select>
+               <h5>넓이</h5>
+               <div class="size-wrap">
+                  <div class="size-style">
+                     <span>W</span
+                     ><input type="number" id="prop-width" step="5" />
+                  </div>
+                  <div class="size-style">
+                     <span>H</span
+                     ><input type="number" id="prop-height" step="5" />
+                  </div>
+               </div>
             </div>
-
-            <label>텍스트</label><br />
-            <textarea id="prop-text"></textarea><br /><br />
-
-            <label>너비 (width)</label><br />
-            <input type="number" id="prop-width" step="5" /><br /><br />
-
-            <label>높이 (height)</label><br />
-            <input type="number" id="prop-height" step="5" /><br /><br />
-
-            <label>배경색</label><br />
-            <button id="prop-bgcolor"></button><br /><br />
-
-            <label>테두리색</label><br />
-            <button id="prop-bordercolor"></button><br /><br />
+            <div class="color-wrap-style">
+               <div class="color-style">
+                  <h5>배경색</h5>
+                  <button id="prop-bgcolor"></button>
+               </div>
+               <div class="color-style">
+                  <h5>테두리색</h5>
+                  <button id="prop-bordercolor"></button>
+               </div>
+            </div>
          </div>
 
          <!-- Connection 전용 -->
          <div id="connection-properties" style="display: none">
-            <h4>연결선 편집</h4>
-            <label>선 색상 (stroke)</label><br />
-            <input type="color" id="prop-conn-color" /><br /><br />
-
-            <label>Label 텍스트</label><br />
-            <textarea id="prop-conn-label"></textarea><br /><br />
-
-            <label>Label 색상 (class)</label><br />
-            <select id="prop-conn-label-type">
-               <option value="">기본</option>
-               <option value="green">green</option>
-               <option value="pink">pink</option>
-               <option value="gray">gray</option></select
-            ><br /><br />
+            <h4>Border Style</h4>
+            <div>
+               <h5>연결선</h5>
+               <div class="size-wrap">
+                  <div class="color-wrap">
+                     <input
+                        type="color"
+                        id="prop-conn-color"
+                        class="input-color-style"
+                     />
+                  </div>
+               </div>
+            </div>
+            <div>
+               <h5>텍스트</h5>
+               <div class="text-wrap">
+                  <select id="prop-conn-label-type">
+                     <option value="">기본</option>
+                     <option value="green">green</option>
+                     <option value="pink">pink</option>
+                     <option value="gray">gray</option>
+                  </select>
+                  <input
+                     type="number"
+                     id="prop-conn-fontsize"
+                     min="8"
+                     max="48"
+                     class="input-style"
+                  />
+               </div>
+               <div>
+                  <textarea id="prop-conn-label"></textarea>
+               </div>
+            </div>
          </div>
       </div>
 
