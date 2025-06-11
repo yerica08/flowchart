@@ -57,14 +57,14 @@ export class FlowEditor {
       });
 
       // 2️⃣ ELK 레이아웃 실행
-      const graph = await this.layoutGraph(data);
+      this.graph = await this.layoutGraph(data);
 
       // 3️⃣ 연결선 생성
       const obstacles = this.utils.getObstacles(
          Array.from(this.containerEl.querySelectorAll('.flow-node'))
       );
 
-      this.createEdges(graph, data, obstacles);
+      this.createEdges(this.graph, data, obstacles);
 
       // 최종 repaint
       this.instance.repaintEverything();
@@ -107,6 +107,34 @@ export class FlowEditor {
       span.innerHTML = node.label || '';
       div.appendChild(span);
 
+      const resizeDiv = document.createElement('div');
+      resizeDiv.classList.add('resize-box');
+
+      // 리사이즈 핸들 대각
+      const directions = [
+         'top-left',
+         'top-right',
+         'bottom-left',
+         'bottom-right', //
+      ];
+      // 리사이즈 핸들 직선
+      const directions2 = ['top', 'right', 'bottom', 'left'];
+
+      directions.forEach((pos) => {
+         const handle = document.createElement('div');
+         handle.classList.add('resize-area');
+         handle.classList.add('resize-handle', pos);
+         resizeDiv.appendChild(handle);
+      });
+      directions2.forEach((pos) => {
+         const handle = document.createElement('div');
+         handle.classList.add('resize-line', pos);
+         handle.classList.add('resize-area');
+         resizeDiv.appendChild(handle);
+      });
+
+      div.appendChild(resizeDiv);
+
       div.addEventListener('click', (e) => {
          e.stopPropagation();
          this.selectNode(div);
@@ -116,6 +144,10 @@ export class FlowEditor {
 
       this.instance.draggable(div, {
          grid: [5, 5],
+         stop: () => {
+            this.updatePaths();
+         },
+         filter: '.resize-area',
       });
 
       this.addEndpoints(node.id);
@@ -401,6 +433,7 @@ export class FlowEditor {
       this.selectedNode.classList.add('selected-node');
 
       this.ui.updateNodePanel(nodeEl);
+      this.ui.interactSetting(nodeEl);
    }
 
    selectConnection(conn) {
@@ -424,8 +457,23 @@ export class FlowEditor {
       }
    }
 
+   updatePaths() {
+      document.querySelectorAll('svg.jtk-connector').forEach((connection) => {
+         const mainPath = connection.querySelector('path.main-path');
+         const d = mainPath.getAttribute('d');
+
+         const bgPath = connection.querySelector('path.bg-path');
+         const hitPath = connection.querySelector('path.hit-path');
+
+         if (bgPath) bgPath.setAttribute('d', d);
+         if (hitPath) hitPath.setAttribute('d', d);
+      });
+   }
+
    repaint() {
       this.instance.repaintEverything();
+      const connections = this.instance.getAllConnections();
+      connections.forEach((conn) => this.updatePaths(conn));
    }
 
    changeStyle(type) {

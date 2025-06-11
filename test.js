@@ -2,7 +2,7 @@ import { FlowEditor } from './flowEditor.js';
 
 const editor = new FlowEditor('canvas');
 
-fetch('demo.json')
+fetch('demo3.json')
    .then((response) => response.json())
    .then((data) => {
       editor.loadData(data);

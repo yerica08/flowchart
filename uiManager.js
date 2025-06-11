@@ -11,7 +11,7 @@ export class UIManager {
          ellipse: {
             width: '150px',
             height: '40px',
-            backgroundColor: '#aeb8c3',
+            backgroundColor: '#8F9CAA',
             color: '#ffffff',
             fontSize: '14px',
             fontWeight: '400',
@@ -83,7 +83,9 @@ export class UIManager {
 
       requestAnimationFrame(() => {
          this.flowEditor.instance.revalidate(node);
+         this.flowEditor.updatePaths();
       });
+      this.updateNodePanel(node);
    }
 
    showEndpoint() {
@@ -120,20 +122,40 @@ export class UIManager {
 
    rgbToHex(rgb) {
       try {
-         if (!rgb || rgb === 'transparent') return '#ffffff';
-         if (rgb.startsWith('#')) return rgb; // 만약 이미 hex 형식이면 그대로 반환
-         const result = rgb.match(/\d+/g);
-         if (!result || result.length < 3) return '#ffffff';
-         return (
+         if (!rgb || rgb === 'transparent') return '#00000000'; // 기본값 투명
+
+         // 이미 hex 형식일 경우
+         if (rgb.startsWith('#')) {
+            // 4자리 (#RGBA) → 8자리로 확장
+            if (rgb.length === 5) {
+               const r = rgb[1],
+                  g = rgb[2],
+                  b = rgb[3],
+                  a = rgb[4];
+               return '#' + r + r + g + g + b + b + a + a;
+            }
+            return rgb; // 그대로 반환 (#RRGGBB 또는 #RRGGBBAA)
+         }
+
+         const result = rgb.match(/\d+(\.\d+)?/g); // [R, G, B, A?]
+         if (!result || result.length < 3) return '#00000000';
+
+         const [r, g, b, a] = result;
+         const hex =
             '#' +
-            result
-               .slice(0, 3)
+            [r, g, b]
                .map((x) => Number(x).toString(16).padStart(2, '0'))
-               .join('')
-         );
+               .join('') +
+            (a !== undefined
+               ? Math.round(parseFloat(a) * 255)
+                    .toString(16)
+                    .padStart(2, '0')
+               : 'ff'); // a 없으면 불투명
+
+         return hex;
       } catch (e) {
          console.log(e);
-         return '#ffffff';
+         return '#00000000';
       }
    }
 
@@ -170,7 +192,7 @@ export class UIManager {
 
       document.getElementById('prop-fontcolor').value = this.rgbToHex(
          nodeEl.style.color || '#000000'
-      );
+      ).slice(0, 7);
 
       document.getElementById('prop-fontweight').value =
          parseInt(nodeEl.style.fontWeight) || 400;
@@ -184,10 +206,12 @@ export class UIManager {
 
       // 패널 값 업데이트
       const strokeColor = conn.getPaintStyle().stroke || '#999999';
-      document.getElementById('prop-conn-color').value =
-         this.rgbToHex(strokeColor);
+      document.getElementById('prop-conn-color').value = this.rgbToHex(
+         strokeColor
+      ).slice(0, 7);
 
       const labelOverlay = conn.getOverlay('labelOverlay');
+
       document.getElementById('prop-conn-label').value =
          labelOverlay?.getLabel() || '';
 
@@ -196,6 +220,14 @@ export class UIManager {
             ?.split(' ')
             ?.find((cls) => cls.startsWith('label-'))
             ?.replace('label-', '') || '';
+
+      if (labelOverlay) {
+         document.getElementById('prop-conn-fontsize').value =
+            parseInt(window.getComputedStyle(labelOverlay?.canvas).fontSize) ||
+            14;
+      } else {
+         document.getElementById('prop-conn-fontsize').value = 11;
+      }
 
       document.getElementById('prop-conn-label-type').value = labelClass;
    }
@@ -322,7 +354,19 @@ export class UIManager {
                }
             }
          });
-
+      // connection label font size
+      document
+         .getElementById('prop-conn-fontsize')
+         .addEventListener('change', (e) => {
+            const newFontSize = e.target.value;
+            const labelEl =
+               this.flowEditor.selectedConnection.getOverlay(
+                  'labelOverlay'
+               )?.canvas;
+            if (labelEl) {
+               labelEl.style.fontSize = `${newFontSize}px`;
+            }
+         });
       // connection label type
       document
          .getElementById('prop-conn-label-type')
@@ -365,6 +409,39 @@ export class UIManager {
 
             this.changeStyle(styleType);
          });
+      });
+      this.flowEditor.containerEl.addEventListener('click', (e) => {
+         // 노드나 연결선 내부가 아닌 경우에만 처리
+         if (
+            !e.target.closest('.flow-node') &&
+            !e.target.closest('svg.jtk-connector') &&
+            !e.target.closest('.waypoint')
+         ) {
+            if (this.flowEditor.selectedNode) {
+               this.flowEditor.selectedNode.classList.remove('selected-node');
+               this.flowEditor.selectedNode = null;
+            }
+            if (this.flowEditor.selectedConnection) {
+               const svgEl =
+                  this.flowEditor.selectedConnection.getConnector().canvas;
+               svgEl.classList.remove('selected-connection');
+               this.flowEditor.selectedConnection = null;
+            }
+
+            // 👉 패널도 닫고 싶으면 아래도 추가 가능
+            document.getElementById('property-panel').style.display = 'none';
+         }
+      });
+      document.addEventListener('keydown', (e) => {
+         if (e.key === 'Delete') {
+            if (this.flowEditor.selectedConnection) {
+               this.flowEditor.instance.deleteConnection(
+                  this.flowEditor.selectedConnection
+               );
+               this.flowEditor.selectedConnection = null;
+               document.getElementById('property-panel').style.display = 'none';
+            }
+         }
       });
    }
 
@@ -481,6 +558,8 @@ export class UIManager {
    }
 
    pickrSetting() {
+      if (this.flowEditor.containerEl.id == 'canvas2') return;
+
       const pickerset = {
          theme: 'monolith', // 테마: 'classic', 'monolith', 'nano'
          autoReposition: true,
@@ -618,6 +697,50 @@ export class UIManager {
          }
 
          instance.setColor(type === 'bg' ? this.nodeBg : this.nodeBorder);
+      });
+   }
+
+   interactSetting(nodeEl) {
+      const node = '#' + nodeEl.id;
+      interact(node).resizable({
+         edges: {
+            top: '.resize-line.top, .resize-handle.top-left, .resize-handle.top-right',
+            bottom:
+               '.resize-line.bottom, .resize-handle.bottom-left, .resize-handle.bottom-right',
+            left: '.resize-line.left, .resize-handle.top-left, .resize-handle.bottom-left',
+            right: '.resize-line.right, .resize-handle.top-right, .resize-handle.bottom-right',
+         },
+         listeners: {
+            move(event) {
+               const target = event.target;
+               const x =
+                  (parseFloat(target.style.left) || 0) + event.deltaRect.left;
+               const y =
+                  (parseFloat(target.style.top) || 0) + event.deltaRect.top;
+
+               target.style.width = event.rect.width + 'px';
+               target.style.height = event.rect.height + 'px';
+               document.getElementById('prop-width').value = event.rect.width;
+               document.getElementById('prop-height').value = event.rect.width;
+
+               target.style.left = x + 'px';
+               target.style.top = y + 'px';
+            },
+            end: () => {
+               this.flowEditor.instance.repaintEverything();
+               this.flowEditor.updatePaths();
+            },
+         },
+         modifiers: [
+            interact.modifiers.restrictSize({
+               min: { width: 50, height: 30 },
+               max: { width: 800, height: 600 },
+            }),
+            interact.modifiers.snapSize({
+               targets: [interact.snappers.grid({ width: 10, height: 10 })],
+            }),
+         ],
+         inertia: true,
       });
    }
 }
