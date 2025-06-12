@@ -50,7 +50,9 @@ export class UIManager {
          },
       };
 
-      this.pickrSetting();
+      if (this.flowEditor.editable) {
+         this.pickrSetting();
+      }
    }
 
    changeStyle(type) {
@@ -101,11 +103,13 @@ export class UIManager {
    }
 
    addBaseNode() {
+      if (!this.flowEditor.editable) return;
+      const y = window.scrollY || window.pageYOffset;
       const newNode = {
          id: `new-node-${Date.now()}`,
          type: 'square',
          x: 20,
-         y: 20,
+         y: y + 50,
          width: 140,
          height: 30,
          backgroundColor: 'ffffff',
@@ -233,6 +237,7 @@ export class UIManager {
    }
 
    bindUIEvents() {
+      if (!this.flowEditor.editable) return;
       // font size 변경
       document.getElementById('prop-fontsize').addEventListener('input', () => {
          const node = this.flowEditor.selectedNode;
@@ -440,6 +445,18 @@ export class UIManager {
                );
                this.flowEditor.selectedConnection = null;
                document.getElementById('property-panel').style.display = 'none';
+            } else if (this.flowEditor.selectedNode) {
+               // 1. 해당 노드에 연결된 커넥션 모두 제거
+               this.flowEditor.instance.deleteConnectionsForElement(
+                  this.flowEditor.selectedNode
+               );
+
+               // 2. 노드 DOM 제거
+               this.flowEditor.selectedNode.remove();
+
+               // 3. 선택 해제
+               this.flowEditor.selectedNode = null;
+               document.getElementById('property-panel').style.display = 'none';
             }
          }
       });
@@ -536,6 +553,10 @@ export class UIManager {
                borderColor:
                   conn.getPaintStyle().stroke.replace('#', '') || '999999',
                label: conn.getOverlay('labelOverlay')?.getLabel() || '',
+               fontSize:
+                  parseInt(
+                     conn.getOverlay('labelOverlay')?.canvas.style.fontSize
+                  ) || '',
                labelType:
                   conn
                      .getOverlay('labelOverlay')
@@ -701,6 +722,7 @@ export class UIManager {
    }
 
    interactSetting(nodeEl) {
+      if (!this.flowEditor.editable) return;
       const node = '#' + nodeEl.id;
       interact(node).resizable({
          edges: {

@@ -1,6 +1,6 @@
 import { FlowEditor } from './flowEditor.js';
 
-const editor = new FlowEditor('canvas');
+const editor = new FlowEditor('canvas', null, { editable: false });
 
 fetch('demo3.json')
    .then((response) => response.json())
@@ -10,15 +10,15 @@ fetch('demo3.json')
 
 // 버튼 연결
 document.getElementById('btnAddNode').addEventListener('click', () => {
-   editor.addBaseNode();
+   if (editor.editable) editor.addBaseNode();
 });
 
 document.getElementById('btnShowEndpoint').addEventListener('click', () => {
-   editor.showEndpoint();
+   if (editor.editable) editor.showEndpoint();
 });
 
 document.getElementById('btnExport').addEventListener('click', () => {
-   editor.exportToJson();
+   if (editor.editable) editor.exportToJson();
 });
 
 document.getElementById('renderCanvas2').addEventListener('click', () => {

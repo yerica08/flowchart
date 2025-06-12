@@ -3,6 +3,7 @@ import { Utils } from './utils.js';
 
 export class FlowEditor {
    constructor(containerId, elkInstance, options = {}) {
+      this.editable = options.editable !== true; // false를 줘야만 편집기능이 꺼짐
       this.elk = elkInstance || new ELK();
       this.containerId = containerId;
       this.containerEl = document.getElementById(containerId);
@@ -289,6 +290,9 @@ export class FlowEditor {
          ];
 
          if (connData?.label) {
+            const fontSize =
+               connData.fontSize + 'px "Noto Sans KR", sans-serif';
+            console.log(fontSize); //11px
             overlays.push([
                'Label',
                {
@@ -296,6 +300,9 @@ export class FlowEditor {
                   label: connData.label,
                   location: 0.5,
                   cssClass: `label-${connData.labelType}`,
+                  labelStyle: {
+                     font: fontSize, //여기서 왜 12px이 되는지?
+                  },
                },
             ]);
          }
@@ -379,6 +386,7 @@ export class FlowEditor {
 
       if (pathEl && !connSvg.querySelector('path.bg-path')) {
          const d = pathEl.getAttribute('d');
+         const transform = pathEl.getAttribute('transform');
 
          const bgPath = document.createElementNS(
             'http://www.w3.org/2000/svg',
@@ -389,8 +397,7 @@ export class FlowEditor {
          bgPath.setAttribute('stroke-width', '5');
          bgPath.setAttribute('fill', 'none');
          bgPath.classList.add('bg-path');
-
-         connSvg.insertBefore(bgPath, pathEl);
+         if (transform) bgPath.setAttribute('transform', transform); // ✅ transform 적용
 
          const hitPath = document.createElementNS(
             'http://www.w3.org/2000/svg',
@@ -402,6 +409,7 @@ export class FlowEditor {
          hitPath.setAttribute('fill', 'none');
          hitPath.classList.add('hit-path');
          hitPath.setAttribute('pointer-events', 'stroke');
+         if (transform) hitPath.setAttribute('transform', transform); // ✅ transform 적용
 
          const self = this;
 
@@ -410,6 +418,7 @@ export class FlowEditor {
             self.selectConnection(connection);
          });
 
+         connSvg.insertBefore(bgPath, pathEl);
          connSvg.insertBefore(hitPath, bgPath);
       }
    }
@@ -420,6 +429,7 @@ export class FlowEditor {
    }
 
    selectNode(nodeEl) {
+      if (!this.editable) return;
       if (this.selectedNode) {
          this.selectedNode.classList.remove('selected-node');
       }
@@ -485,10 +495,12 @@ export class FlowEditor {
    }
 
    showEndpoint() {
+      if (!this.editable) return;
       this.ui.showEndpoint();
    }
 
    addBaseNode() {
+      if (!this.editable) return;
       this.ui.addBaseNode();
    }
 
